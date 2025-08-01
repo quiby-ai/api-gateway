@@ -11,6 +11,8 @@ const (
 
 	DefaultLogLevel  = "info"
 	DefaultLogFormat = "json"
+
+	DefaultAuthServiceURL = "http://localhost:8081"
 )
 
 const (
@@ -22,4 +24,6 @@ const (
 
 	EnvLogLevel  = "LOG_LEVEL"
 	EnvLogFormat = "LOG_FORMAT"
+
+	EnvAuthServiceURL = "AUTH_SERVICE_URL"
 )

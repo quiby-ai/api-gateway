@@ -11,21 +11,30 @@ import (
 	"time"
 
 	"github.com/clientpulse-org/api-gateway/config"
+	"github.com/clientpulse-org/api-gateway/internal/gateway"
 )
 
 func main() {
 	cfg, err := config.Load()
 	if err != nil {
-		log.Fatalf("Failed to load configuration: %v", err)
+		log.Fatalf("config load: %v", err)
 	}
 
-	addr := fmt.Sprintf("%s:%s", cfg.Server.Host, cfg.Server.Port)
-
 	mux := http.NewServeMux()
-	mux.HandleFunc("/healthz", healthHandler)
+	mux.HandleFunc("/healthz", func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("OK"))
+	})
+
+	for _, rt := range cfg.Gateway.Routes {
+		proxy := gateway.NewProxy(rt.UpstreamURL, rt.RewritePath)
+		handler := gateway.MethodFilter(rt.Method, proxy)
+		mux.Handle(rt.Path, handler)
+		log.Printf("→ %s %s → %s (rewrite to %q)", rt.Method, rt.Path, rt.UpstreamURL, rt.RewritePath)
+	}
 
 	srv := &http.Server{
-		Addr:         addr,
+		Addr:         fmt.Sprintf("%s:%s", cfg.Server.Host, cfg.Server.Port),
 		Handler:      mux,
 		ReadTimeout:  cfg.Server.ReadTimeout,
 		WriteTimeout: cfg.Server.WriteTimeout,
@@ -33,32 +42,20 @@ func main() {
 	}
 
 	go func() {
-		log.Printf("Server is running on %s", addr)
-		log.Printf("Configuration loaded - Log Level: %s, Format: %s", cfg.Logging.Level, cfg.Logging.Format)
+		log.Printf("Gateway listening on %s", srv.Addr)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("Server error: %v", err)
+			log.Fatalf("listen error: %v", err)
 		}
 	}()
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
-
-	log.Println("Shutting down server...")
+	log.Println("Shutting down…")
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-
 	if err := srv.Shutdown(ctx); err != nil {
-		log.Fatalf("Server forced to shutdown: %v", err)
+		log.Fatalf("shutdown error: %v", err)
 	}
-
-	log.Println("Server exited")
-}
-
-func healthHandler(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-	_, err := w.Write([]byte("OK"))
-	if err != nil {
-		http.Error(w, "server unavailable", http.StatusBadGateway)
-	}
+	log.Println("Exited cleanly")
 }
