@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -14,6 +16,13 @@ type Route struct {
 	Method      string
 	UpstreamURL string
 	RewritePath string
+}
+
+type CORSConfig struct {
+	AllowedOrigins []string
+	AllowedMethods []string
+	AllowedHeaders []string
+	MaxAge         int
 }
 
 func NewProxy(upstream, rewritePath string) http.Handler {
@@ -50,6 +59,61 @@ func NewProxy(upstream, rewritePath string) http.Handler {
 	}
 
 	return proxy
+}
+
+func CORSMiddleware(corsConfig CORSConfig, allowedMethod string, h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		origin := r.Header.Get("Origin")
+
+		if isOriginAllowed(origin, corsConfig.AllowedOrigins) {
+			w.Header().Set("Access-Control-Allow-Origin", origin)
+			w.Header().Set("Access-Control-Allow-Credentials", "true")
+		}
+
+		if r.Method == http.MethodOptions {
+			if len(corsConfig.AllowedMethods) > 0 {
+				w.Header().Set("Access-Control-Allow-Methods", strings.Join(corsConfig.AllowedMethods, ", "))
+			} else {
+				w.Header().Set("Access-Control-Allow-Methods", allowedMethod)
+			}
+
+			if len(corsConfig.AllowedHeaders) > 0 {
+				if len(corsConfig.AllowedHeaders) == 1 && corsConfig.AllowedHeaders[0] == "*" {
+					w.Header().Set("Access-Control-Allow-Headers", "*")
+				} else {
+					w.Header().Set("Access-Control-Allow-Headers", strings.Join(corsConfig.AllowedHeaders, ", "))
+				}
+			}
+
+			if corsConfig.MaxAge > 0 {
+				w.Header().Set("Access-Control-Max-Age", strconv.Itoa(corsConfig.MaxAge))
+			}
+
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+
+		if r.Method != allowedMethod {
+			w.Header().Set("Allow", allowedMethod)
+			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		h.ServeHTTP(w, r)
+	})
+}
+
+func isOriginAllowed(origin string, allowedOrigins []string) bool {
+	if len(allowedOrigins) == 0 {
+		return false
+	}
+
+	for _, allowed := range allowedOrigins {
+		if allowed == "*" || allowed == origin {
+			return true
+		}
+	}
+	return false
 }
 
 func MethodFilter(method string, h http.Handler) http.Handler {

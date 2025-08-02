@@ -24,10 +24,18 @@ type LoggingConfig struct {
 	Format string `mapstructure:"format"`
 }
 
+type CORSConfig struct {
+	AllowedOrigins []string `mapstructure:"allowedOrigins"`
+	AllowedMethods []string `mapstructure:"allowedMethods"`
+	AllowedHeaders []string `mapstructure:"allowedHeaders"`
+	MaxAge         int      `mapstructure:"maxAge"`
+}
+
 type Config struct {
 	Server  ServerConfig  `mapstructure:"server"`
 	Logging LoggingConfig `mapstructure:"logging"`
 	Gateway GatewayConfig `mapstructure:"gateway"`
+	CORS    CORSConfig    `mapstructure:"cors"`
 }
 
 func Load() (*Config, error) {

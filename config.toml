@@ -9,6 +9,12 @@ idleTimeout = "120s"
 level = "info"
 format = "text"
 
+[cors]
+allowedOrigins = ["*"]
+allowedMethods = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+allowedHeaders = ["*"]
+maxAge = 86400
+
 [gateway]
 
   [[gateway.routes]]

@@ -26,9 +26,16 @@ func main() {
 		w.Write([]byte("OK"))
 	})
 
+	corsConfig := gateway.CORSConfig{
+		AllowedOrigins: cfg.CORS.AllowedOrigins,
+		AllowedMethods: cfg.CORS.AllowedMethods,
+		AllowedHeaders: cfg.CORS.AllowedHeaders,
+		MaxAge:         cfg.CORS.MaxAge,
+	}
+
 	for _, rt := range cfg.Gateway.Routes {
 		proxy := gateway.NewProxy(rt.UpstreamURL, rt.RewritePath)
-		handler := gateway.MethodFilter(rt.Method, proxy)
+		handler := gateway.CORSMiddleware(corsConfig, rt.Method, proxy)
 		mux.Handle(rt.Path, handler)
 		log.Printf("→ %s %s → %s (rewrite to %q)", rt.Method, rt.Path, rt.UpstreamURL, rt.RewritePath)
 	}
