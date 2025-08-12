@@ -1,4 +1,4 @@
-module github.com/clientpulse-org/api-gateway
+module github.com/quiby-ai/api-gateway
 
 go 1.24.1
 

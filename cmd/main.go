@@ -10,8 +10,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/clientpulse-org/api-gateway/config"
-	"github.com/clientpulse-org/api-gateway/internal/gateway"
+	"github.com/quiby-ai/api-gateway/config"
+	"github.com/quiby-ai/api-gateway/internal/gateway"
 )
 
 func main() {

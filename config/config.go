@@ -3,7 +3,7 @@ package config
 import (
 	"time"
 
-	"github.com/clientpulse-org/api-gateway/internal/gateway"
+	"github.com/quiby-ai/api-gateway/internal/gateway"
 	"github.com/spf13/viper"
 )
 
