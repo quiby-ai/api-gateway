@@ -20,6 +20,6 @@ maxAge = 86400
   [[gateway.routes]]
   path = "/login"
   method = "POST"
-  upstreamURL = "http://localhost:8081"
+  upstreamURL = "http://auth-service:8081"
   rewritePath = "/"
 
