@@ -9,5 +9,5 @@ FROM gcr.io/distroless/static:nonroot
 COPY --from=build /bin/app /app
 USER nonroot
 
-EXPOSE ${GATEWAY_PORT}
+EXPOSE 8080
 ENTRYPOINT ["/app"]
