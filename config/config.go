@@ -42,7 +42,8 @@ func Load() (*Config, error) {
 	v := viper.New()
 	v.SetConfigName("config")
 	v.SetConfigType("toml")
-	v.AddConfigPath(".")
+	v.AddConfigPath("/")
+
 	v.AutomaticEnv()
 
 	if err := v.ReadInConfig(); err != nil {
