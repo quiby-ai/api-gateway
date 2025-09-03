@@ -29,3 +29,9 @@ maxAge = 86400
   upstreamURL = "http://saga-orchestrator:8082"
   rewritePath = "/v1/sagas/reviews/start"
 
+  [[gateway.routes]]
+  path = "/rag/query"
+  method = "POST"
+  upstreamURL = "http://review-rag:8083"
+  rewritePath = "/"
+
